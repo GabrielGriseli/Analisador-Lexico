@@ -1,4 +1,4 @@
-# Analisador-Lexico
+# Analisador Léxico
 
 Implementação de um Analisador Léxico para a matéria de Linguagens Formais do curso de Ciências da Computação, URI - Erechim .
 
