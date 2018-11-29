@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+    <title></title>
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.teal-green.min.css" />
+    <link rel="stylesheet" type="text/css" href="./styles.css">
+
+</head>
+
+<body>
+
+    <div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+        <header class="mdl-layout__header">
+            <div class="mdl-layout__header-row">
+                <span class="mdl-layout-title">Analisador Léxico</span>
+            </div>
+        </header>
+
+        <main class="mdl-layout__content" style="flex: 1 0 auto;">
+            <div id="vueApp">
+                <!-- mdl-color--white mdl-shadow--2dp -->
+
+                <div class="mdl-grid">
+
+                    <div class="mdl-cell mdl-cell--12-col mdl-grid">
+                        <div class="mdl-cell mdl-cell--6-col mdl-grid mdl-color--white mdl-shadow--3dp">
+                            <span class="title">Adicionar Palavras</span>
+                            <div class="mdl-cell mdl-cell--12-col mdl-grid">
+                                <div class="mdl-cell mdl-cell--8-col mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                                    <input class="mdl-textfield__input" type="text" pattern="[A-Z,a-z]*" id="input_word"
+                                        v-on:keyup.enter="addWord()" v-on:keyup.space="addWord()">
+                                    <label class="mdl-textfield__label" for="input_word">Informe uma palavra para
+                                        adicionar no dicionário</label>
+                                    <span class="mdl-textfield__error">Apenas letras, por favor!</span>
+                                </div>
+                                <div class="mdl-cell mdl-cell--4-col">
+                                    <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-js-ripple-effect"
+                                        v-on:click='addWord()'>
+                                        <i class="material-icons">add</i>
+                                        <label>Adicionar</label>
+                                    </button>
+                                </div>
+                            </div>
+                            <span class="title">Dicionário</span>
+                            <div class="mdl-cell mdl-cell--12-col dicio">
+                                <span class="mdl-chip mdl-chip--contact mdl-chip--deletable" v-for="(word, indexWord) in arrayWords">
+                                    <span class="mdl-chip__text table-headings-color">&nbsp{{word}}</span>
+                                    <button type="button" class="mdl-chip__action" v-on:click="removeWord(indexWord)"><i
+                                            class="material-icons">cancel</i></button>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="mdl-cell mdl-cell--6-col mdl-grid mdl-color--white mdl-shadow--3dp">
+                            <span class="title">Validar Palavras</span>
+                            <div class="mdl-cell mdl-cell--12-col mdl-grid">
+                                <div class="mdl-cell mdl-cell--8-col mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+                                    <input class="mdl-textfield__input" type="text" pattern="[A-Z,a-z]*" id="search_word"
+                                        v-on:keyup="searchWord()" v-on:keyup.enter="addWordSearch()" v-on:keyup.space="addWordSearch()">
+                                    <label class="mdl-textfield__label" for="input_word">Pesquisar uma palavra</label>
+                                    <span class="mdl-textfield__error">Apenas letras, por favor!</span>
+                                </div>
+                                <div class="mdl-cell mdl-cell--4-col">
+                                    <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored"
+                                        v-on:click='addWordSearch()'>
+                                        <i class="material-icons">search</i>
+                                        <label>Pesquisar</label>
+                                    </button>
+                                </div>
+                            </div>
+                            <span class="title">Palavras Testadas</span>
+                            <div class="mdl-cell mdl-cell--12-col dicio">
+                                <span class="mdl-chip mdl-chip--contact mdl-chip--deletable" v-for="(word, indexWord) in arrayWordsTested">
+                                    <span v-if="word.status" class="mdl-chip__contact mdl-color--teal mdl-color-text--white"></span>
+                                    <span v-else class="mdl-chip__contact mdl-color--red mdl-color-text--white"></span>
+                                    <span class="mdl-chip__text table-headings-color">&nbsp{{word.name}}</span>
+                                    <button type="button" class="mdl-chip__action" v-on:click="removeWordTested(indexWord)"><i
+                                            class="material-icons">cancel</i></button>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mdl-cell mdl-cell--12-col mdl-grid mdl-color--white mdl-shadow--3dp">
+                        <span class="title">Tabela de Estados</span>
+                        <table class="mdl-cell mdl-cell--12-col mdl-data-table mdl-js-data-table">
+                            <thead>
+                                <tr>
+                                    <th class="mdl-data-table__cell--non-numeric table-headings-color">&delta;</th>
+                                    <th class="mdl-data-table__cell--non-numeric table-headings-color" v-bind:class="{ 'mdl-color--teal-100': coloredColumn === 0, 'mdl-color--red-200': coloredColumnError === 0}">A</th>
+                                    <th class="mdl-data-table__cell--non-numeric table-headings-color" v-bind:class="{ 'mdl-color--teal-100': coloredColumn === 1, 'mdl-color--red-200': coloredColumnError === 1}">B</th>
+                                    <th class="mdl-data-table__cell--non-numeric table-headings-color" v-bind:class="{ 'mdl-color--teal-100': coloredColumn === 2, 'mdl-color--red-200': coloredColumnError === 2}">C</th>
+                                    <th class="mdl-data-table__cell--non-numeric table-headings-color" v-bind:class="{ 'mdl-color--teal-100': coloredColumn === 3, 'mdl-color--red-200': coloredColumnError === 3}">D</th>
+                                    <th class="mdl-data-table__cell--non-numeric table-headings-color" v-bind:class="{ 'mdl-color--teal-100': coloredColumn === 4, 'mdl-color--red-200': coloredColumnError === 4}">E</th>
+                                    <th class="mdl-data-table__cell--non-numeric table-headings-color" v-bind:class="{ 'mdl-color--teal-100': coloredColumn === 5, 'mdl-color--red-200': coloredColumnError === 5}">F</th>
+                                    <th class="mdl-data-table__cell--non-numeric table-headings-color" v-bind:class="{ 'mdl-color--teal-100': coloredColumn === 6, 'mdl-color--red-200': coloredColumnError === 6}">G</th>
+                                    <th class="mdl-data-table__cell--non-numeric table-headings-color" v-bind:class="{ 'mdl-color--teal-100': coloredColumn === 7, 'mdl-color--red-200': coloredColumnError === 7}">H</th>
+                                    <th class="mdl-data-table__cell--non-numeric table-headings-color" v-bind:class="{ 'mdl-color--teal-100': coloredColumn === 8, 'mdl-color--red-200': coloredColumnError === 8}">I</th>
+                                    <th class="mdl-data-table__cell--non-numeric table-headings-color" v-bind:class="{ 'mdl-color--teal-100': coloredColumn === 9, 'mdl-color--red-200': coloredColumnError === 9}">J</th>
+                                    <th class="mdl-data-table__cell--non-numeric table-headings-color" v-bind:class="{ 'mdl-color--teal-100': coloredColumn === 10, 'mdl-color--red-200': coloredColumnError === 10}">K</th>
+                                    <th class="mdl-data-table__cell--non-numeric table-headings-color" v-bind:class="{ 'mdl-color--teal-100': coloredColumn === 11, 'mdl-color--red-200': coloredColumnError === 11}">L</th>
+                                    <th class="mdl-data-table__cell--non-numeric table-headings-color" v-bind:class="{ 'mdl-color--teal-100': coloredColumn === 12, 'mdl-color--red-200': coloredColumnError === 12}">M</th>
+                                    <th class="mdl-data-table__cell--non-numeric table-headings-color" v-bind:class="{ 'mdl-color--teal-100': coloredColumn === 13, 'mdl-color--red-200': coloredColumnError === 13}">N</th>
+                                    <th class="mdl-data-table__cell--non-numeric table-headings-color" v-bind:class="{ 'mdl-color--teal-100': coloredColumn === 14, 'mdl-color--red-200': coloredColumnError === 14}">O</th>
+                                    <th class="mdl-data-table__cell--non-numeric table-headings-color" v-bind:class="{ 'mdl-color--teal-100': coloredColumn === 15, 'mdl-color--red-200': coloredColumnError === 15}">P</th>
+                                    <th class="mdl-data-table__cell--non-numeric table-headings-color" v-bind:class="{ 'mdl-color--teal-100': coloredColumn === 16, 'mdl-color--red-200': coloredColumnError === 16}">Q</th>
+                                    <th class="mdl-data-table__cell--non-numeric table-headings-color" v-bind:class="{ 'mdl-color--teal-100': coloredColumn === 17, 'mdl-color--red-200': coloredColumnError === 17}">R</th>
+                                    <th class="mdl-data-table__cell--non-numeric table-headings-color" v-bind:class="{ 'mdl-color--teal-100': coloredColumn === 18, 'mdl-color--red-200': coloredColumnError === 18}">S</th>
+                                    <th class="mdl-data-table__cell--non-numeric table-headings-color" v-bind:class="{ 'mdl-color--teal-100': coloredColumn === 19, 'mdl-color--red-200': coloredColumnError === 19}">T</th>
+                                    <th class="mdl-data-table__cell--non-numeric table-headings-color" v-bind:class="{ 'mdl-color--teal-100': coloredColumn === 20, 'mdl-color--red-200': coloredColumnError === 20}">U</th>
+                                    <th class="mdl-data-table__cell--non-numeric table-headings-color" v-bind:class="{ 'mdl-color--teal-100': coloredColumn === 21, 'mdl-color--red-200': coloredColumnError === 21}">V</th>
+                                    <th class="mdl-data-table__cell--non-numeric table-headings-color" v-bind:class="{ 'mdl-color--teal-100': coloredColumn === 22, 'mdl-color--red-200': coloredColumnError === 22}">W</th>
+                                    <th class="mdl-data-table__cell--non-numeric table-headings-color" v-bind:class="{ 'mdl-color--teal-100': coloredColumn === 23, 'mdl-color--red-200': coloredColumnError === 23}">X</th>
+                                    <th class="mdl-data-table__cell--non-numeric table-headings-color" v-bind:class="{ 'mdl-color--teal-100': coloredColumn === 24, 'mdl-color--red-200': coloredColumnError === 24}">Y</th>
+                                    <th class="mdl-data-table__cell--non-numeric table-headings-color" v-bind:class="{ 'mdl-color--teal-100': coloredColumn === 25, 'mdl-color--red-200': coloredColumnError === 25}">Z</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="(line, lineIndex) in matrix" v-bind:class="{ 'mdl-color--teal-100': coloredLine === lineIndex,  'mdl-color--red-200': coloredLineError === lineIndex}">
+                                    <td class="mdl-data-table__cell--non-numeric table-headings-color" v-if="line[26] !== '*'">q{{lineIndex}}</td>
+                                    <td class="mdl-data-table__cell--non-numeric table-headings-color" v-else>q{{lineIndex}}*</td>
+                                    <td class="mdl-data-table__cell--non-numeric" v-for="(column, indexColumn) in line"
+                                        v-if="indexColumn !== 26" v-bind:class="{ 'mdl-color--teal-100': coloredColumn === indexColumn, 'mdl-color--teal-500': coloredColumn === indexColumn && coloredLine === lineIndex, 'mdl-color--red-200': coloredColumnError === indexColumn, 'mdl-color--red-A700': coloredColumnError === indexColumn && coloredLineError === lineIndex}">
+                                        <div class="table-body-color" v-if="column === '-'">{{column}}</div>
+                                        <div class="table-selected-color" v-if="column !== '-' && coloredColumn === indexColumn && coloredLine === lineIndex">q{{column}}</div>
+                                        <div class="table-headings-color" v-if="column !== '-' && (coloredColumn !== indexColumn || coloredLine !== lineIndex)">q{{column}}</div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <p>&nbsp&nbsp</p>
+                        <button class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored" v-on:click='clearTable()'>
+                            <i class="material-icons">clear</i>
+                            <label>Limpar Analisador</label>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+        <footer class="mdl-mini-footer">
+            <div class="mdl-mini-footer__left-section">
+                <a target="_blank" rel="noopener noreferrer" href="https://github.com/GabrielGriseli">
+                    <span class="mdl-chip mdl-chip--contact">
+                        <span class="mdl-chip__contact mdl-color--teal mdl-color-text--white">
+                            <img src="github-logo.png" />
+                        </span>
+                        <span class="mdl-chip__text">
+                            Gabriel Júnior Griseli
+                        </span>
+                    </span>
+                </a>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Snackbar -->
+    <div id="demo-toast-example" class="mdl-js-snackbar mdl-snackbar mdl-color--teal">
+        <div class="mdl-snackbar__text"></div>
+        <button class="mdl-snackbar__action" type="button"></button>
+    </div>
+
+</body>
+
+<script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+<script src="https://unpkg.com/vue"></script>
+<script>
+    var vueApp = new Vue({
+        el: '#vueApp',
+        data: {
+            arrayWords: [],
+            arrayWordsTested: [],
+            matrix: [],
+            coloredLine: "",
+            coloredColumn: "",
+            coloredLineError: "",
+            coloredColumnError: ""
+        },
+        methods: {
+            addWord() {
+                var word = document.getElementById('input_word').value.trim().toLowerCase();
+                if (/^[a-zA-Z]+$/.test(word)) {
+                    if (this.arrayWords.indexOf(word) === -1) {
+                        if (word.length !== 0) {
+                            this.arrayWords.push(word);
+                        }
+                        document.getElementById("input_word").parentElement.MaterialTextfield.change("");
+                        this.buildMatrix();
+                        this.snackbarMessage("Palavra adicionada!");
+                    } else {
+                        document.getElementById("input_word").parentElement.MaterialTextfield.change("");
+                        this.snackbarMessage("Palavra já adicionada!");
+                    }
+                }
+            },
+            removeWord(indexWord) {
+                this.arrayWords.splice(indexWord, 1);
+                this.buildMatrix();
+                this.snackbarMessage("Palavra removida!");
+            },
+            buildMatrix() {
+                this.matrix = [];
+
+                if (this.arrayWords.length > 0) {
+                    var qLast = 0;
+                    this.matrix[0] = new Array(27).fill("-");
+                    for (var word of this.arrayWords) {
+                        var qLine = 0;
+                        for (var letter of word) {
+                            var qcolumn = letter.charCodeAt(0) - 'a'.charCodeAt(0);
+                            if (this.matrix[qLine][qcolumn] !== "-") {
+                                qLine = this.matrix[qLine][qcolumn];
+                            } else {
+                                qLast++;
+                                this.matrix[qLine][qcolumn] = qLast;
+                                qLine = qLast;
+                                this.matrix[qLine] = new Array(27).fill("-");
+                            }
+                        }
+                        this.matrix[qLine][26] = "*";
+                    }
+                }
+                ///this.$forceUpdate();
+            },
+            searchWord() {
+                var word = document.getElementById('search_word').value.trim().toLowerCase();
+                if (/^[a-zA-Z]+$/.test(word)) {
+                    var nextLine = 0;
+                    this.coloredLineError = "";
+                    this.coloredColumnError = "";
+                    for (var letter of word) {
+                        this.coloredLine = nextLine;
+                        this.coloredColumn = letter.charCodeAt(0) - 'a'.charCodeAt(0);
+                        nextLine = this.matrix[nextLine][letter.charCodeAt(0) - 'a'.charCodeAt(0)];
+                        if (nextLine === "-") {
+                            this.coloredLineError = this.coloredLine;
+                            this.coloredColumnError = this.coloredColumn;
+                            this.coloredLine = "";
+                            this.coloredColumn = "";
+                            break;
+                        }
+                    }
+                }
+            },
+            addWordSearch() {
+                var word = document.getElementById('search_word').value.trim().toLowerCase();
+                if (/^[a-zA-Z]+$/.test(word)) {
+                    var obj = {
+                        name: word,
+                        status: false
+                    }
+                    if (this.coloredLineError !== "" || this.coloredColumnError !== "") {
+                        this.arrayWordsTested.push(obj);
+                        this.snackbarMessage("Palavra incorreta!");
+                    } else {
+                        var nextLine = this.matrix[this.coloredLine][this.coloredColumn];
+                        if (this.matrix[nextLine][26] === "*") {
+                            obj.status = true;
+                            this.snackbarMessage("Palavra correta!");
+                        }
+                        this.arrayWordsTested.push(obj);
+                    }
+                    document.getElementById("search_word").parentElement.MaterialTextfield.change("");
+                    this.coloredLine = "";
+                    this.coloredColumn = "";
+                    this.coloredLineError = "";
+                    this.coloredColumnError = "";
+                }
+            },
+            removeWordTested(indexWord) {
+                this.arrayWordsTested.splice(indexWord, 1);
+                this.snackbarMessage("Palavra pesquisada removida!");
+            },
+            clearTable() {
+                this.arrayWords = [];
+                this.arrayWordsTested = [];
+                this.matrix = [];
+                this.coloredLine = "";
+                this.coloredColumn = "";
+                this.coloredLineError = "";
+                this.coloredColumnError = "";
+                this.snackbarMessage("Analisador reiniciado!");
+            },
+            snackbarMessage(message) {
+                var snackbarContainer = document.querySelector('#demo-toast-example');
+                snackbarContainer.MaterialSnackbar.showSnackbar({
+                    message: message
+                });
+            }
+        }
+    });
+</script>
+
+</html>

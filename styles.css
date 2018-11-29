@@ -1,0 +1,26 @@
+.table-headings-color {
+    font-weight: 900 !important;
+    color: rgb(96,125,139) !important;
+}
+
+.table-body-color {
+    color: rgb(96,125,139);
+}
+
+.table-selected-color {
+    font-weight: 900 !important;
+    color: white !important;
+}
+
+.title {
+    display: block;
+    font-size: 24px;
+    margin-left: auto;
+    margin-right: auto;
+    color: rgb(96,125,139);  
+}
+
+.dicio {
+    height: 100px;
+    overflow: auto;
+}
